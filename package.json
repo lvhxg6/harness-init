@@ -1,0 +1,11 @@
+{
+  "name": "activity-checkin-harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:js": "node scripts/check-js.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.54.2"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex Harness Delivery Report",
+  "type": "object",
+  "required": [
+    "feature",
+    "verification_status",
+    "implemented_requirements",
+    "changed_files",
+    "commands_run",
+    "risks"
+  ],
+  "properties": {
+    "feature": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": ["passed", "failed", "blocked"]
+    },
+    "implemented_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "commands_run": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "screenshots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_review_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

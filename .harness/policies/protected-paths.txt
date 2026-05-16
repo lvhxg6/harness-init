@@ -1,0 +1,14 @@
+.harness/run-feature.sh
+.harness/new-feature.sh
+.harness/prompts/**
+.harness/policies/**
+.harness/schemas/**
+scripts/**
+AGENTS.md
+Makefile
+package.json
+playwright.config.ts
+docs/architecture/system.md
+docs/architecture/testing.md
+docs/architecture/codex-harness.md
+docs/architecture/_feature-template.md

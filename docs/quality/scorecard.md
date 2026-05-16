@@ -9,7 +9,8 @@ Use this scorecard to judge whether the Harness produced a strong delivery.
 - E2E screenshots exist for major user-flow checkpoints.
 - API tests exercise the real HTTP API instead of directly calling services.
 - E2E tests drive a browser and create real screenshots.
-- Review has no High or Medium findings.
+- Review has no High or Medium findings that block the current mode. Stable/mock
+  delivery may include explicit live-only pending items for a later `--live` run.
 - Live provider credentials are loaded only from environment variables or
   `.harness/env/.env.live`, and logs never contain the full key.
 - Delivery report lists changed files and commands run.

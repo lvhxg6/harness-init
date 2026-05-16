@@ -40,4 +40,6 @@ done < <(find "$workspace_dir" -type f \( -name '*.js' -o -name '*.mjs' -o -name
   ! -path "*/.cache/*" \
   -print)
 
+./scripts/check-test-contract.sh
+
 echo "[light-check] OK"

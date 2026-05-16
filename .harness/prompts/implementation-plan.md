@@ -29,6 +29,9 @@ The Markdown plan must include:
 
 - Implementation tasks to run.
 - Business files to create or modify.
+- Backend unit/domain/integration tests to create when backend verification will
+  run a backend test entry such as `npm test`, `mvn test`, `pytest`, or
+  `go test`.
 - API tests to create when APIs are involved.
 - Playwright E2E tests to create when UI workflows are involved.
 - Required screenshots and their target paths.
@@ -58,6 +61,16 @@ Task rules:
   feature has backend, frontend, API tests, or E2E tests.
 - Split large work into small tasks by module, service, UI area, test layer, or
   integration boundary.
+- Use the test-entry contract: if a task creates or keeps a backend test entry
+  that the Harness will execute, the plan must include a task that creates the
+  matching backend test files in the backend project itself. Examples:
+  `{{WORKSPACE}}/backend/**/*.test.ts` for Vitest/Jest,
+  `{{WORKSPACE}}/backend/src/test/` for Maven/Gradle,
+  `{{WORKSPACE}}/backend/test_*.py` or `*_test.py` for pytest, and
+  `{{WORKSPACE}}/backend/**/*_test.go` for Go.
+- API tests under `{{WORKSPACE}}/tests/api/` and E2E tests under
+  `{{WORKSPACE}}/tests/e2e/` do not satisfy a backend unit test entry such as
+  `npm test`; plan backend tests separately when that entry exists.
 - Every task id must be stable, lowercase, and must not contain spaces.
 - Every task must write business code, tests, or fixtures only under
   `{{WORKSPACE}}/`.

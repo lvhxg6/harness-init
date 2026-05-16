@@ -5,10 +5,18 @@
   "required": [
     "feature",
     "verification_status",
+    "stable_status",
+    "review_status",
+    "live_status",
+    "live_pending",
     "implemented_requirements",
     "changed_files",
     "commands_run",
-    "risks"
+    "evidence",
+    "screenshots",
+    "risks",
+    "human_review_needed",
+    "recommended_next_harness_improvements"
   ],
   "properties": {
     "feature": {
@@ -17,6 +25,24 @@
     "verification_status": {
       "type": "string",
       "enum": ["passed", "failed", "blocked"]
+    },
+    "stable_status": {
+      "type": "string",
+      "enum": ["passed", "failed", "blocked", "skipped"]
+    },
+    "review_status": {
+      "type": "string",
+      "enum": ["passed", "blocked", "passed_with_live_pending"]
+    },
+    "live_status": {
+      "type": "string",
+      "enum": ["not_run", "passed", "failed", "blocked"]
+    },
+    "live_pending": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "implemented_requirements": {
       "type": "array",
@@ -55,6 +81,12 @@
       }
     },
     "human_review_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_next_harness_improvements": {
       "type": "array",
       "items": {
         "type": "string"

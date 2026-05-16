@@ -20,12 +20,20 @@ Workspace: `{{WORKSPACE}}`
 
 任务：
 
-1. 修复 review 中所有 High 和 Medium 问题。
+1. 只修复 review 中 `Category: workspace-fixable` 且阻断当前模式的 High 和 Medium 问题。
 2. 只修复 `{{WORKSPACE}}/` 下的业务代码和业务测试；不要修改 `.harness/`、`scripts/`、`AGENTS.md` 和全局架构规则文件，除非明确处于 Harness 维护任务。
 3. 对 E2E 问题，必须使用真实 Playwright 页面操作和 `page.screenshot()`，不能写入占位 PNG。
 4. 对 API 问题，必须通过 HTTP 调用真实接口，不能直接调用 service/domain 函数冒充接口测试。
 5. 对 OpenAI live provider 问题，必须实现真实 provider；默认验证仍可使用 mock provider。
 6. 对第三方 API 适配问题，必须优先以 `docs/references/{{FEATURE}}/` 中的资料为准。
 7. 修复后运行最窄相关静态检查、单元测试或 build；不要启动长驻 dev server。完整验证由外层 Harness 执行。
+
+不要尝试修复以下 finding：
+
+- `Category: live-only` 或 `Severity: Live Pending`：这类问题需要 `--live`
+  运行产生真实 API、真实日志和真实截图，不能通过伪造文件解决。
+- `Category: environment`：需要用户或本地环境处理。
+- `Category: human-input`：需要用户补充信息、账号、密钥、额度或产品决策。
+- `Category: harness`：除非当前任务明确是 Harness 维护任务，否则不要修改 Harness frame。
 
 最终输出中文说明：修复了哪些阻断项、修改了哪些文件、仍有哪些风险。

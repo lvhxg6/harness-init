@@ -40,8 +40,20 @@ fi
 
 export HARNESS_LIVE_OPENAI="${HARNESS_LIVE_OPENAI:-0}"
 export IMAGE_PROVIDER="${IMAGE_PROVIDER:-openai}"
-export OPENAI_IMAGE_BASE_URL="${OPENAI_IMAGE_BASE_URL:-https://api.openai.com/v1}"
-export OPENAI_IMAGE_MODEL="${OPENAI_IMAGE_MODEL:-gpt-image-2}"
+
+if [[ -z "${OPENAI_IMAGE_BASE_URL:-}" ]]; then
+  export OPENAI_IMAGE_BASE_URL="https://api.openai.com/v1"
+  openai_image_base_url_status="default"
+else
+  openai_image_base_url_status="present"
+fi
+
+if [[ -z "${OPENAI_IMAGE_MODEL:-}" ]]; then
+  export OPENAI_IMAGE_MODEL="gpt-image-2"
+  openai_image_model_status="default"
+else
+  openai_image_model_status="present"
+fi
 
 if [[ "$HARNESS_LIVE_OPENAI" != "1" ]]; then
   echo "[live-env] HARNESS_LIVE_OPENAI 不是 1，live 验证不会执行真实生图" >&2
@@ -64,6 +76,6 @@ fi
 
 echo "[live-env] Live 配置已加载："
 echo "[live-env] IMAGE_PROVIDER=$IMAGE_PROVIDER"
-echo "[live-env] OPENAI_IMAGE_MODEL=$OPENAI_IMAGE_MODEL"
-echo "[live-env] OPENAI_IMAGE_BASE_URL=$OPENAI_IMAGE_BASE_URL"
+echo "[live-env] OPENAI_IMAGE_MODEL=$openai_image_model_status"
+echo "[live-env] OPENAI_IMAGE_BASE_URL=$openai_image_base_url_status"
 echo "[live-env] OPENAI_API_KEY=present"

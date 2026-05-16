@@ -87,7 +87,8 @@ A feature is complete only when:
 - `HARNESS_STRICT=1 FEATURE={feature} make verify` passes.
 - If live mode is requested, `FEATURE={feature} make verify-live` also passes
   inside `.harness/run-feature.sh`.
-- A delivery report is written under `.harness/runs/{feature}/`.
+- Delivery reports are written under `.harness/runs/{feature}/` as validated
+  `delivery.json` plus human-readable `delivery.md`.
 
 ## Development Rules
 
@@ -131,8 +132,10 @@ Real dependency closed loop with live verification:
 
 `--live` validates `.harness/env/.env.live` or shell environment first, then runs
 architecture generation, acceptance generation, dynamic task implementation,
-strict verify, review gate, live API smoke test, live Playwright E2E, and repair
-loops.
+strict verify, live API smoke test, live Playwright E2E, review gate, and repair
+loops. Without `--live`, the Harness runs stable/mock verification only. Missing
+live-only evidence such as real provider logs or `live-results.png` is recorded
+as pending instead of blocking stable delivery.
 
 To discard prior run state and business output for a feature:
 
@@ -163,6 +166,14 @@ Feature runs write progress to:
 ```
 
 Use `./scripts/harness-status.sh {feature}` to inspect the current or latest run.
+This command is read-only by default. Use
+`./scripts/harness-status.sh {feature} --reconcile` only when you intentionally
+want to reconcile a stale recorded PID into an interrupted state.
+
+Resume is epoch based. Historical review, repair, delivery, and blocked-report
+files are retained as evidence, but they must not be reused as current gate
+decisions after a blocked run resumes. Durable business implementation outputs
+under `workspace/` and `.harness/runs/{feature}/tasks/` may be reused.
 
 Harness failures are classified as:
 
@@ -180,6 +191,11 @@ Harness failures are classified as:
 Codex must not try to fix `ENVIRONMENT_FAILURE`, `HARNESS_FAILURE`, or
 `NEEDS_HUMAN_INPUT` by changing business code. Those require Harness maintenance,
 environment changes, or user-provided information.
+
+Review findings must distinguish `workspace-fixable`, `live-only`,
+`environment`, `human-input`, and `harness` categories. Review repair stages only
+fix workspace-fixable findings that block the current mode. Live-only findings
+block `--live` runs but are pending, not blocking, during stable/mock runs.
 
 ## Final Response Requirements
 

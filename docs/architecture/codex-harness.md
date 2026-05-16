@@ -54,12 +54,12 @@ PRD
   -> implementation plan and .harness/runs/{feature}/tasks.yaml
   -> .harness/run-feature.sh
   -> codex exec implements dynamic tasks with lightweight checks only
-  -> lightweight workspace structure check
+  -> lightweight workspace structure and test-entry contract check
   -> install workspace dependencies once from the outer Harness process
   -> HARNESS_STRICT=1 FEATURE={feature} make verify
   -> failed logs and screenshots feed back to codex exec
-  -> review
   -> optional live verify and live E2E when --live is enabled
+  -> review
   -> delivery report
 ```
 
@@ -68,14 +68,62 @@ Every run writes state to `.harness/runs/{feature}/state.json`,
 `.harness/runs/{feature}/timeline.jsonl`, and
 `.harness/runs/{feature}/status.md`. `scripts/harness-status.sh {feature}` reads
 these files and prints the full step table, current task, elapsed time, latest
-logs, screenshots, and blocked reason.
+logs, screenshots, and blocked reason without mutating run state. Use
+`scripts/harness-status.sh {feature} --reconcile` only when stale PID
+reconciliation is intentionally requested.
 
 The runner defaults to compact output: full progress is printed at stage
 boundaries, while long-running stages print heartbeat lines with current stage,
 duration, idle time, changed file count, PID, and output path. Set
 `HARNESS_OUTPUT=full` to print the full status table during heartbeats.
 
-## 3.1 Architecture Modes
+## 3.1 Resume and Recovery
+
+The default `.harness/run-feature.sh {feature}` command is a resume command.
+It keeps `.harness/runs/{feature}/` and `workspace/`, reconciles state on
+startup, and continues from durable checkpoints. Use `--fresh` only when the
+feature run and workspace should be discarded and rebuilt from zero.
+
+On startup, the Harness checks the recorded `currentPid`. If the state says a
+stage is `RUNNING` but the PID no longer exists, the stage is marked
+`INTERRUPTED`, the PID fields are cleared, and a timeline event is appended.
+The next run then continues from files and completed stages instead of treating
+the dead process as active.
+
+Blocked runs are recoverable. If a previous run stopped with
+`NEEDS_HUMAN_INPUT`, `ENVIRONMENT_FAILURE`, or another blocking category, the
+blocked report and logs remain as historical evidence. After the user fixes the
+condition and the next run passes the relevant preflight or live-env checks, the
+Harness clears the active blocked state, records `resume-after-blocked`, and
+continues. Old failure files are not deleted; they are treated as superseded
+history and no longer define the current state.
+
+Resume is epoch based. Each successful blocked recovery increments `runEpoch`.
+Durable implementation outputs can be reused across epochs, but judgment
+outputs are regenerated in the current epoch. Review, repair-review,
+live-verify, delivery, and blocked-report stages must not reuse old epoch files
+as current decisions. Current verification artifacts include the epoch in the
+filename, for example `verify-e1-0.log`, `review-e1-0.md`, and
+`review-gate-e1-0.log`.
+
+Delivery produces two artifacts. `delivery.json` is the machine-readable source
+of truth and must pass `.harness/schemas/delivery-report.schema.json`.
+`delivery.md` is the human-readable report generated from the validated JSON.
+
+Task-level recovery is conservative. A task is skipped only when the task stage
+is `DONE` and its task output file exists. If a task was interrupted after
+writing partial workspace files, the Harness runs that task again and instructs
+Codex to read existing files first, then incrementally complete or repair the
+task without deleting unrelated work.
+
+The Harness also enforces a test-entry contract during lightweight checks. If a
+workspace module exposes a test command that verification will execute, the
+module must contain matching test assets. For example, a Node backend with
+`npm test` must contain backend `*.test.*` or `*.spec.*` files under
+`workspace/backend/`; API and E2E specs under `workspace/tests/` are separate
+layers and do not satisfy that backend entry.
+
+## 3.2 Architecture Modes
 
 When `docs/architecture/{feature}.md` is missing, `.harness/run-feature.sh`
 supports:
@@ -90,11 +138,11 @@ supports:
 In non-interactive execution, `prompt` behaves like `generate` so automation can
 continue.
 
-## 3.2 Live Mode
+## 3.3 Live Mode
 
 `.harness/run-feature.sh {feature} --live` runs the same closed loop as the
 default command, but adds real dependency verification after strict verification
-and review gate pass.
+and before the final review gate.
 
 Live mode does this before implementation starts:
 
@@ -110,11 +158,21 @@ Live mode does this before delivery:
 - Feeds live failures to Codex through `.harness/prompts/fix-live-verification.md`.
 - Continues the bounded repair loop until live verification passes or attempts
   are exhausted.
+- Runs review after live verification so live-only evidence is judged from
+  completed live logs and screenshots, not from future expected artifacts.
 
-If strict verification or review fails, live verification is skipped and the
-status file records the skip reason.
+If strict verification fails, live verification is skipped and the status file
+records the skip reason. If live verification passes, review runs against both
+stable and live evidence.
 
-## 3.3 Failure Categories
+Review is mode-aware. In the default stable/mock run, review may record
+live-only evidence as pending, but it must not block stable delivery for missing
+real provider screenshots or live logs. In `--live` mode, those same pending
+items become live blockers until real API, live log, and live screenshot
+evidence exists. Provider implementations that are still stubs are not
+live-only; they are workspace-fixable stable blockers.
+
+## 3.4 Failure Categories
 
 Harness failures are routed by category:
 
@@ -135,7 +193,19 @@ Verify, review, live, idle, and stalled categories can enter recovery or repair
 loops when retryable. Environment, Harness, and human-input failures block with a
 report.
 
-## 3.4 Third-Party References
+Review blockers are repaired only when they are `workspace-fixable`. Live-only
+findings route to live verification or `LIVE_PROVIDER_FAILURE`, environment
+findings route to `ENVIRONMENT_FAILURE`, human-input findings route to
+`NEEDS_HUMAN_INPUT`, and Harness findings route to `HARNESS_FAILURE`.
+
+Missing tests or screenshots, empty test suites such as `No test files found`,
+type failures, build failures, API assertion failures, and E2E assertion
+failures are `VERIFY_FAILURE` cases. They are retryable because Codex can repair
+business code or tests under `workspace/`. Dependency registry/network failures
+and missing local commands remain `ENVIRONMENT_FAILURE` and block for user or
+environment action.
+
+## 3.5 Third-Party References
 
 Optional external API documentation belongs in:
 
@@ -171,6 +241,10 @@ The Harness must decide:
 - Which screenshots are required as E2E evidence.
 - When a task is blocked and needs human review.
 - How failures are classified and whether Codex should repair or block.
+
+Status output must distinguish active and historical blockers. Historical
+blocked reports and old `BLOCKED` rows stay in the run directory as evidence,
+but they do not define current state after a successful resume.
 
 ## 5. Extension Points
 

@@ -13,6 +13,11 @@ retryable="true"
 reason="verification failed"
 
 case "$content" in
+  *"No test files found"*|*"backend test script exists but no backend unit test files were found"*|*"Strict mode requires"*|*"Strict mode requires API specs"*|*"Strict mode requires E2E specs"*|*"Strict mode requires backend"*|*"Strict mode requires frontend"*|*"Strict mode requires real screenshots"*|*"no PNG screenshots found"*)
+    category="VERIFY_FAILURE"
+    retryable="true"
+    reason="verification test contract or required test evidence is missing"
+    ;;
   *"STAGE_IDLE_TIMEOUT"*|*"idle timeout"*|*"no effective progress"*)
     category="STAGE_IDLE_TIMEOUT"
     retryable="true"
@@ -38,7 +43,7 @@ case "$content" in
     retryable="false"
     reason="environment dependency missing"
     ;;
-  *"ENOTFOUND"*|*"EAI_AGAIN"*|*"ECONNRESET"*|*"ECONNREFUSED"*|*"ETIMEDOUT"*|*"network timeout"*|*"getaddrinfo"*|*"registry.npmjs.org"*|*"npm ERR! network"*)
+  *"npm ERR! network"*|*"npm ERR! code ENOTFOUND"*|*"npm ERR! code EAI_AGAIN"*|*"ENOTFOUND"*|*"EAI_AGAIN"*|*"ECONNRESET"*|*"ECONNREFUSED"*|*"ETIMEDOUT"*|*"network timeout"*|*"getaddrinfo ENOTFOUND"*|*"getaddrinfo EAI_AGAIN"*)
     category="ENVIRONMENT_FAILURE"
     retryable="false"
     reason="dependency registry or network is unreachable"

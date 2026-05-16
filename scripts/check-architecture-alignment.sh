@@ -30,7 +30,7 @@ require_if_mentioned() {
 
 require_if_mentioned "React" "frontend package depends on react" "[[ -f '$frontend_pkg' ]] && grep -qi 'react' '$frontend_pkg'"
 require_if_mentioned "Vite" "frontend package uses vite" "[[ -f '$frontend_pkg' ]] && grep -qi 'vite' '$frontend_pkg'"
-require_if_mentioned "TypeScript" "workspace has TypeScript config or source" "find '$workspace_dir' -name tsconfig.json -o -name '*.ts' -o -name '*.tsx' | grep -q ."
+require_if_mentioned "TypeScript" "workspace has TypeScript config or source" "find '$workspace_dir' \( -path '*/node_modules' -o -path '*/dist' \) -prune -o \( -name tsconfig.json -o -name '*.ts' -o -name '*.tsx' \) -print -quit | grep -q ."
 require_if_mentioned "Fastify" "backend package depends on fastify" "[[ -f '$backend_pkg' ]] && grep -qi 'fastify' '$backend_pkg'"
 
 if [[ "$failed" == "1" ]]; then
